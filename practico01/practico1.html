@@ -15,6 +15,11 @@
 Tengo una edad de {{edad}}  Años y
  Vivo en la ciudad de {{ciudad}}  
 </h1>
+<br>
+<br>
+<h2>contador {{contador}}</h2>
+<button @click="incrementar">incrementar</button>
+<button @click="decrementar">decrementar</button>
     </div>
     <script>
         var app = new Vue ({
@@ -23,10 +28,17 @@ Tengo una edad de {{edad}}  Años y
             data: {
                    nombre: "Ana García",
                   edad: 30,
-                  ciudad: "Tupungato"
+                  ciudad: "Tupungato",
+                  contador: 0
             },
             methods: {
-  
+                incrementar: function(){
+                    this.contador++;
+                },
+                decrementar: function(){
+                    this.contador--;
+                }
+            
             },
             computed:{
                
