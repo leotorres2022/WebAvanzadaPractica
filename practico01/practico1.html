@@ -20,7 +20,25 @@ Tengo una edad de {{edad}}  Años y
 <h2>contador {{contador}}</h2>
 <button @click="incrementar">incrementar</button>
 <button @click="decrementar">decrementar</button>
-    </div>
+<br>
+<h3 class="mt-4">Lista de tareas</h3>
+<ul class="list-group">
+  <li v-for="tarea in tareas" :key="tarea.id" class="align-items-center">
+    <input type="checkbox" v-model="tarea.completada" >
+    <span :class="{ 'text-muted': tarea.completada, 'text-decoration-line-through': tarea.completada }">
+      {{ tarea.texto }}
+    </span>
+      </li>
+</ul>
+<input v-model="nuevaTarea" placeholder="Nueva tarea" >
+<button @click="AgregarTarea">Agregar Tarea</button>
+<br>
+<br>
+<p >Tareas pendientes: {{ tareasPendientes }}</p>
+<br>
+<p>Total de tareas: {{ totalTareas }}</p>
+
+   </div>
     <script>
         var app = new Vue ({
 
@@ -29,7 +47,16 @@ Tengo una edad de {{edad}}  Años y
                    nombre: "Ana García",
                   edad: 30,
                   ciudad: "Tupungato",
-                  contador: 0
+                  contador: 0,
+                  nuevaTarea: '',
+                tareas: [
+                { id: 1, texto: 'Aprender Vue', completada: false },
+                { id: 2, texto: 'Practicar JavaScript', completada: false },
+                { id: 3, texto: 'Leer documentación', completada: false },
+                { id: 4, texto: 'Terminar antes del viernes', completada: true },
+                { id: 5, texto: 'Entregar en tiempo y forma', completada: true }
+
+            ]
             },
             methods: {
                 incrementar: function(){
@@ -37,11 +64,26 @@ Tengo una edad de {{edad}}  Años y
                 },
                 decrementar: function(){
                     this.contador--;
+                },
+                AgregarTarea: function(){
+                    if(this.nuevaTarea.trim() !== ''){
+                        this.tareas.push({
+                            id: this.tareas.length + 1,
+                            texto: this.nuevaTarea,
+                            completada: false
+                        });
+                        this.nuevaTarea = '';
+                    }
                 }
             
             },
             computed:{
-               
+               tareasPendientes: function(){
+                return this.tareas.filter(tarea => !tarea.completada).length;
+               },
+               totalTareas: function(){
+                return this.tareas.length;
+               }
             },
  
         })
