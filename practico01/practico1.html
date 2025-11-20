@@ -38,7 +38,16 @@ Tengo una edad de {{edad}}  Años y
 <br>
 <p>Total de tareas: {{ totalTareas }}</p>
 
-   </div>
+   
+    <h3>Eventos de Ciclo de Vida</h3>
+    <ul>
+        <li v-for="evento in listaeventos" :key="evento.id">
+            {{ evento.id }} - {{ evento.nombre }} - {{ new Date(evento.timestamp).toLocaleString() }}
+        </li>
+    </ul>
+
+    </div>
+
     <script>
         var app = new Vue ({
 
@@ -56,7 +65,33 @@ Tengo una edad de {{edad}}  Años y
                 { id: 4, texto: 'Terminar antes del viernes', completada: true },
                 { id: 5, texto: 'Entregar en tiempo y forma', completada: true }
 
-            ]
+            ],
+            listaeventos: [] 
+            },
+            
+            beforeCreate() {
+                try { this.agregarEvento('beforeCreate'); } catch (e) { }
+            },
+            created() {
+                this.agregarEvento('created');
+            },
+            beforeMount() {
+                this.agregarEvento('beforeMount');
+            },
+            mounted() {
+                this.agregarEvento('mounted');
+            },
+            beforeUpdate() {
+               this.agregarEvento('beforeUpdate');
+            },
+            updated() {
+              //  this.agregarEvento('updated');
+            },
+            beforeDestroy() {
+                this.agregarEvento('beforeDestroy');
+            },
+            destroyed() {
+                this.agregarEvento('destroyed');
             },
             methods: {
                 incrementar: function(){
@@ -74,16 +109,18 @@ Tengo una edad de {{edad}}  Años y
                         });
                         this.nuevaTarea = '';
                     }
+                },
+                agregarEvento(nombre) {
+                    if (!this.listaeventos) {
+                        this.listaeventos = [];
+                    }
+                    const evento = {
+                        id: this.listaeventos.length + 1,
+                        nombre: nombre,
+                        timestamp: Date.now()
+                    };
+                    this.listaeventos.push(evento);
                 }
-            
-            },
-            computed:{
-               tareasPendientes: function(){
-                return this.tareas.filter(tarea => !tarea.completada).length;
-               },
-               totalTareas: function(){
-                return this.tareas.length;
-               }
             },
  
         })
