@@ -6,6 +6,19 @@
     <title>Document</title>
    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
     <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        /* Quitar controles (spinners) en inputs type=number para el input del post */
+        .no-spin::-webkit-outer-spin-button,
+        .no-spin::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .no-spin {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+    </style>
 </head>
 <body>
     
@@ -46,6 +59,38 @@ Tengo una edad de {{edad}}  Años y
         </li>
     </ul>
 
+        <hr />
+        <h3>Obtener Post</h3>
+        <div class="form-inline">
+            <input type="number" v-model.number="postId" class="form-inline no-spin" placeholder="ID del Post" />
+            <button class="btn btn-primary" @click="cargarPost">Cargar Post</button>
+        </div>
+        <div v-if="post" class="card mt-3">
+            <div >
+              <p><strong>userId:</strong>{{post.userId}}</p>  
+             <p> <strong>Id:</strong> {{post.id}}</p>
+              <p ><strong>Title:</strong>  {{post.title}}</p>  
+             <p><strong>body:</strong> {{post.body}}</p>
+              
+            </div>
+        </div>
+           <h3>Obtener Comments</h3>
+        <div class="form-inline">
+            <input type="number" v-model.number="commentsPostId" class="form-inline no-spin" placeholder="ID del Post " />
+            <button class="btn btn-primary" @click="cargarComments">Cargar Comments</button>
+        </div>
+        <div v-if="comments && comments.length" class="card mt-2">
+            <div class="p-3">
+                <h5>Comments ({{ comments.length }})</h5>
+                <ul class="list-group">
+                    <li class="list-group-item" v-for="c in comments" :key="c.id">
+                        <strong>{{ c.name }}</strong> — <em>{{ c.email }}</em>
+                        <p class="mb-0">{{ c.body }}</p>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -58,6 +103,10 @@ Tengo una edad de {{edad}}  Años y
                   ciudad: "Tupungato",
                   contador: 0,
                   nuevaTarea: '',
+                
+                  post: null,
+                 
+                  comments: [],
                 tareas: [
                 { id: 1, texto: 'Aprender Vue', completada: false },
                 { id: 2, texto: 'Practicar JavaScript', completada: false },
@@ -121,9 +170,76 @@ Tengo una edad de {{edad}}  Años y
                     };
                     this.listaeventos.push(evento);
                 }
+                ,
+
+                /*funciones para cargar post y comments */
+                async cargarPost() {
+                    try {
+                        const resultado = await obtenerPost(this.postId);
+                        this.post = resultado;
+                    } catch (err) {
+                        console.error('Error cargando post:', err);
+                        this.post = null;
+                        alert('No se pudo cargar el post');
+                    }
+                },
+                async cargarComments() {
+                    try {
+                        const resultado = await obtenerComments(this.commentsPostId);
+                        this.comments = resultado;
+                    } catch (err) {
+                        console.error('Error cargando comments:', err);
+                        this.comments = [];
+                        alert('No se pudo cargar los comments');
+                    }
+                }
+            },
+
+            /*fin de funciones para cargar post y comments */
+            computed:{
+               tareasPendientes: function(){
+                return this.tareas.filter(tarea => !tarea.completada).length;
+               },
+               totalTareas: function(){
+                return this.tareas.length;
+               }
             },
  
         })
+
+        // Configuración de Axios
+        const api = axios.create({
+            baseURL: 'https://jsonplaceholder.typicode.com',
+            timeout: 5000
+        });
+
+        // obtenerPost: recibe id del post y devuelve el objeto
+        async function obtenerPost(postId) {
+            if (typeof postId !== 'number') {
+                postId = Number(postId);
+            }
+            try {
+                const response = await api.get(`/posts/${postId}`);
+                return response.data;
+            } catch (error) {
+                console.error('Error al obtener el post:', error);
+                throw error;
+            }
+        }
+
+        // obtener los comentarios del id del post
+        async function obtenerComments(postId) {
+            if (typeof postId !== 'number') {
+                postId = Number(postId);
+            }
+            try {
+                const response = await api.get(`/posts/${postId}/comments`);
+                return response.data;
+            } catch (error) {
+                console.error('Error al obtener los comments:', error);
+                throw error;
+            }
+        }
     </script>
 </body>
 </html>
