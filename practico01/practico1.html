@@ -8,7 +8,6 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
-        /* Quitar controles (spinners) en inputs type=number para el input del post */
         .no-spin::-webkit-outer-spin-button,
         .no-spin::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -18,6 +17,8 @@
             -moz-appearance: textfield;
             appearance: textfield;
         }
+        .clickable { cursor: pointer; }
+        .selected-post { background-color: #f0f8ff; }
     </style>
 </head>
 <body>
@@ -51,7 +52,7 @@ Tengo una edad de {{edad}}  Años y
 <br>
 <p>Total de tareas: {{ totalTareas }}</p>
 
-   
+     <h3>Practico Nº2 </h3> <br>
     <h3>Eventos de Ciclo de Vida</h3>
     <ul>
         <li v-for="evento in listaeventos" :key="evento.id">
@@ -77,18 +78,33 @@ Tengo una edad de {{edad}}  Años y
            <h3>Obtener Comments</h3>
         <div class="form-inline">
             <input type="number" v-model.number="commentsPostId" class="form-inline no-spin" placeholder="ID del Post " />
-            <button class="btn btn-primary" @click="cargarComments">Cargar Comments</button>
+            <button class="btn btn-primary" @click="mostrarComments(commentsPostId)">Cargar Comments</button>
         </div>
-        <div v-if="comments && comments.length" class="card mt-2">
+        <div id="commentsCard" class="card mt-2" v-if="selectedPostId || (comments && comments.length)">
             <div class="p-3">
-                <h5>Comments ({{ comments.length }})</h5>
-                <ul class="list-group">
-                    <li class="list-group-item" v-for="c in comments" :key="c.id">
+                <h5 v-if="selectedPostId">Comments del post {{ selectedPostId }}  total de comments:<small class="text-muted">({{ (postComments[selectedPostId] && postComments[selectedPostId].length) || (comments && comments.length) || 0 }})</small></h5>
+                <h5 v-else>Comments ({{ comments.length }})</h5>
+                <div v-if="selectedPostId && postComments[selectedPostId] === null" class="text-muted">Cargando comentarios...</div>
+                <ul class="list-group" v-else-if="(selectedPostId && postComments[selectedPostId] && postComments[selectedPostId].length) || (!selectedPostId && comments && comments.length)">
+                    <li class="list-group-item" v-for="c in (selectedPostId ? postComments[selectedPostId] : comments)" :key="c.id">
                         <strong>{{ c.name }}</strong> — <em>{{ c.email }}</em>
                         <p class="mb-0">{{ c.body }}</p>
                     </li>
                 </ul>
+                <div v-else class="text-muted">No hay comentarios para este post.</div>
             </div>
+        </div>
+        <hr />
+        <h3>Primeros 10 Posts</h3>
+        <div v-if="posts && posts.length" class="mt-2">
+            <ul class="list-group">
+                <li class="list-group-item clickable" v-for="p in posts" :key="p.id"
+                    @click="mostrarComments(p.id)"
+                    :class="{ 'selected-post': selectedPostId === p.id }">
+                    <strong>{{ p.id }} - {{ p.title }}</strong>
+                    <p class="mb-0">{{ p.body }}</p>
+                </li>
+            </ul>
         </div>
 
     </div>
@@ -106,7 +122,10 @@ Tengo una edad de {{edad}}  Años y
                 
                   post: null,
                  
-                  comments: [],
+                comments: [],
+                posts: [],
+                postComments: {},
+                selectedPostId: null,
                 tareas: [
                 { id: 1, texto: 'Aprender Vue', completada: false },
                 { id: 2, texto: 'Practicar JavaScript', completada: false },
@@ -127,8 +146,20 @@ Tengo una edad de {{edad}}  Años y
             beforeMount() {
                 this.agregarEvento('beforeMount');
             },
-            mounted() {
+                mounted() {
                 this.agregarEvento('mounted');
+                /* cargar los primeros 10 posts al montar */
+                (async () => {
+                    
+                    for (let i = 0; i <= 10; i++) {
+                        try {
+                            const p = await obtenerPost(i);
+                            this.posts.push(p);
+                        } catch (err) {
+                            console.error('Error al obtener post', i, err);
+                        }
+                    }
+                })();
             },
             beforeUpdate() {
                this.agregarEvento('beforeUpdate');
@@ -183,14 +214,38 @@ Tengo una edad de {{edad}}  Años y
                         alert('No se pudo cargar el post');
                     }
                 },
-                async cargarComments() {
-                    try {
-                        const resultado = await obtenerComments(this.commentsPostId);
-                        this.comments = resultado;
-                    } catch (err) {
-                        console.error('Error cargando comments:', err);
+                async mostrarComments(postId) {
+                    // Si no se pasó un id válido sale
+                    if (!postId) return;
+                    // toglea la selección del post
+                    if (this.selectedPostId === postId) {
+                        this.selectedPostId = null;
                         this.comments = [];
-                        alert('No se pudo cargar los comments');
+                        const el = document.getElementById('commentsCard');/* lo mueve arriba*/
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                        return;
+                    }
+                    // seleccionar el post
+                    this.selectedPostId = postId;
+                    if (this.postComments && this.postComments[postId]) {
+                        this.comments = this.postComments[postId];
+                        return;
+                    }
+
+                    try {
+                        this.$set(this.postComments, postId, null);
+                        this.comments = [];
+                        const resultado = await obtenerComments(postId);
+                        this.$set(this.postComments, postId, resultado);
+                        this.comments = resultado;
+
+                        const el = document.getElementById('commentsCard');
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    } catch (err) {
+                        console.error('Error cargando comments del post:', postId, err);
+                        this.$set(this.postComments, postId, []);
+                        this.comments = [];
+                        alert('No se pudo cargar los comments del post seleccionado');
                     }
                 }
             },
