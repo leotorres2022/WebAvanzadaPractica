@@ -1,8 +1,6 @@
-version: '1.0'
-
 services:
   db:
-    image: postgres:16
+    image: postgres:16-alpine
     container_name: postgres_db
     restart: always
     environment:
@@ -14,3 +12,25 @@ services:
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
 
+  django:
+    build:
+      context: ./config/django-image
+      dockerfile: Dockerfile
+    image: fei2026tp-backend:v0.1
+    container_name: django_backend
+    restart: always
+    volumes:
+      - ./backend:/app
+    ports:
+      - "${DJANGO_PORT}:8000"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME}
+      - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
+      - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL}
+    depends_on:
+      - db
