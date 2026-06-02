@@ -1,4 +1,4 @@
-from rest_framework import models, serializers
+from rest_framework import  serializers
 from .models import Carrera, Profesor, Materia, Aula, ReservaAula, HorarioMateria
 
 class CarreraSerializer(serializers.ModelSerializer):
